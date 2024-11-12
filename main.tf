@@ -48,7 +48,7 @@ resource "aws_security_group" "craftcms_sg" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Adjust to restrict IPs if needed
+    cidr_blocks = ["0.0.0.0/0"] 
   }
 
   # Allow all outbound traffic
@@ -90,6 +90,16 @@ resource "aws_security_group" "load_balancer_sg" {
   }
 }
 
+resource "aws_security_group_rule" "ecs_inbound_from_lb" {
+  type              = "ingress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  security_group_id = aws_security_group.craftcms_sg.id  # ECS task security group
+  source_security_group_id = aws_security_group.load_balancer_sg.id  # Load balancer security group
+}
+
+
 # IAM Role for ECS Task Execution
 resource "aws_iam_role" "ecs_task_execution_role" {
   name = "ecsTaskExecutionRole"
@@ -111,6 +121,17 @@ resource "aws_iam_role" "ecs_task_execution_role" {
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+# IAM Role for ECS Access to CloudWatchLogsFullAccess
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy_logs" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+}
+
+resource "aws_cloudwatch_log_group" "ecs_log_group" {
+  name              = "/ecs/craftcms"
+  retention_in_days = 7  # Optional: set retention period for log data
 }
 
 resource "aws_ecs_service" "craftcms_service" {
@@ -148,7 +169,7 @@ resource "aws_lb_target_group" "craftcms_target_group" {
   target_type = "ip"
 
   health_check {
-    path                = "/health"          # Use the correct path that returns a 200 OK response
+    path                = "/index.php"          # Use the correct path that returns a 200 OK response
     protocol            = "HTTP"
     interval            = 30           # Health check interval in seconds
     timeout             = 5            # Health check timeout in seconds
