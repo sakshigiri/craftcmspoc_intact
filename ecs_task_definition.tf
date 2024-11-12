@@ -27,6 +27,14 @@ resource "aws_ecs_task_definition" "craftcms_task" {
         { name = "DB_USER", value = "craftcmspoc" },
         { name = "DB_PASSWORD", value = "intact1234!" }
       ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = "/ecs/craftcms"
+          awslogs-region        = var.region
+          awslogs-stream-prefix = "ecs"
+        }
+      }
     }
   ])
 }
