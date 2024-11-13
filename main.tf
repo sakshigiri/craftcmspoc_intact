@@ -44,11 +44,19 @@ resource "aws_security_group" "craftcms_sg" {
   description = "Allow HTTP inbound traffic from the load balancer"
 
   # Allow inbound traffic on port 80 from the load balancer
+  #ingress {
+  #  from_port   = 80
+  #  to_port     = 80
+  #  protocol    = "tcp"
+  #  cidr_blocks = ["0.0.0.0/0"] 
+  #}
+
+# Allow all inbound traffic
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] 
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Allow all outbound traffic
@@ -67,12 +75,21 @@ resource "aws_security_group" "load_balancer_sg" {
   description = "Allow HTTP traffic to the load balancer"
 
   # Allow inbound traffic on port 80 from any IP
+  #ingress {
+  #  from_port   = 80
+  #  to_port     = 80
+  #  protocol    = "tcp"
+  #  cidr_blocks = ["0.0.0.0/0"]
+  #}
+  
+  # Allow all inbound traffic
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   # Allow inbound SSH traffic on port 22
   ingress {
     from_port   = 22
@@ -169,10 +186,10 @@ resource "aws_lb_target_group" "craftcms_target_group" {
   target_type = "ip"
 
   health_check {
-    path                = "/index.php"          # Use the correct path that returns a 200 OK response
+    path                = "/"          # Use the correct path that returns a 200 OK response
     protocol            = "HTTP"
     interval            = 30           # Health check interval in seconds
-    timeout             = 5            # Health check timeout in seconds
+    timeout             = 10            # Health check timeout in seconds
     healthy_threshold   = 2            # Number of successes required to be marked healthy
     unhealthy_threshold = 2            # Number of failures before marked unhealthy
   }
